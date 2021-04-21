@@ -48,28 +48,28 @@ var data = `{
   ]
 }`
 
-func jpfn(enableJSONoutput bool) func(_ string, _ interface{}) (interface{}, error) {
-	return func(expr string, data interface{}) (interface{}, error) {
-		jp := jsonpath.New("jp")
-		if err := jp.Parse(expr); err != nil {
-			return nil, fmt.Errorf("unrecognized column definition %q", expr)
-		}
-		jp.AllowMissingKeys(true)
-		jp.EnableJSONOutput(enableJSONoutput)
+func jpfn(expr string, data interface{}, jsonoutput ...bool) (interface{}, error) {
+	enableJSONoutput := len(jsonoutput) > 0 && jsonoutput[0]
 
-		var buf bytes.Buffer
-		err := jp.Execute(&buf, data)
-		if err != nil {
-			return nil, err
-		}
-
-		if enableJSONoutput {
-			var v []interface{}
-			err = json.Unmarshal(buf.Bytes(), &v)
-			return v, err
-		}
-		return buf.String(), err
+	jp := jsonpath.New("jp")
+	if err := jp.Parse(expr); err != nil {
+		return nil, fmt.Errorf("unrecognized column definition %q", expr)
 	}
+	jp.AllowMissingKeys(true)
+	jp.EnableJSONOutput(enableJSONoutput)
+
+	var buf bytes.Buffer
+	err := jp.Execute(&buf, data)
+	if err != nil {
+		return nil, err
+	}
+
+	if enableJSONoutput {
+		var v []interface{}
+		err = json.Unmarshal(buf.Bytes(), &v)
+		return v, err
+	}
+	return buf.String(), err
 }
 
 func main() {
@@ -80,11 +80,10 @@ func main() {
 	}
 
 	fm := sprig.TxtFuncMap()
-	fm["j"] = jpfn(true)
-	fm["js"] = jpfn(false)
+	fm["jp"] = jpfn
 
 	tpl := template.Must(template.New("").Funcs(fm).Parse(`
-{{ js "{.items}" . | fromJson | len }}
+{{ jp "{.items}" . }}
 `))
 	err = tpl.Execute(os.Stdout, d)
 	if err != nil {
