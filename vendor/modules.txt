@@ -5,7 +5,7 @@ github.com/Masterminds/semver/v3
 # github.com/Masterminds/sprig/v3 v3.2.2
 ## explicit
 github.com/Masterminds/sprig/v3
-# github.com/google/uuid v1.1.1
+# github.com/google/uuid v1.1.2
 github.com/google/uuid
 # github.com/huandu/xstrings v1.3.1
 github.com/huandu/xstrings
@@ -19,8 +19,12 @@ github.com/mitchellh/reflectwalk
 github.com/shopspring/decimal
 # github.com/spf13/cast v1.3.1
 github.com/spf13/cast
-# golang.org/x/crypto v0.0.0-20200414173820-0848c9571904
+# golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/scrypt
+# k8s.io/client-go v0.21.0
+## explicit
+k8s.io/client-go/third_party/forked/golang/template
+k8s.io/client-go/util/jsonpath

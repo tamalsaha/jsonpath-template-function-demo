@@ -4,7 +4,17 @@ import (
 	"os"
 	"text/template"
 	"github.com/Masterminds/sprig/v3"
+	"k8s.io/client-go/util/jsonpath"
 )
+
+func main2() {
+	jp := jsonpath.New(col.Name)
+	if err := jp.Parse(col.JSONPath); err != nil {
+		return nil, fmt.Errorf("unrecognized column definition %q", col.JSONPath)
+	}
+	jp.AllowMissingKeys(true)
+
+}
 
 func main() {
 	type Inner struct {
