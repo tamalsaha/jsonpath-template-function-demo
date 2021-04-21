@@ -11,6 +11,8 @@ import (
 	"k8s.io/client-go/util/jsonpath"
 )
 
+// https://kubernetes.io/docs/reference/kubectl/jsonpath/
+
 var data = `{
   "kind": "List",
   "items":[
