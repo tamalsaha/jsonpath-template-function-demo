@@ -197,7 +197,7 @@ func main2(d interface{}) error {
 	return nil
 }
 
-func main() {
+func main_____() {
 	var d interface{}
 	err := json.Unmarshal([]byte(data), &d)
 	if err != nil {
@@ -215,9 +215,29 @@ func main() {
 	fm["k8s_age"] = ageFn
 	fm["k8s_ports"] = portsFn
 
-	tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ jp "{.spec.ports}" . | k8s_ports }}`))
+	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ jp "{.metadata.labels}" . }}`))
+	tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.labels2 | toJson }}`))
+	// Not that zero will attempt to add default values for types it knows,
+	// but will still emit <no value> for others. We mitigate that later.
+	tpl.Option("missingkey=zero")
 	err = tpl.Execute(os.Stdout, d)
 	if err != nil {
 		panic(err)
 	}
+}
+
+func main() {
+	var m map[string]interface{}
+	data, err := json.Marshal(m)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(data))
+
+	var x map[string]interface{}
+	err = json.Unmarshal(data, &x)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%+v", x)
 }
