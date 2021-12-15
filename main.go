@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/labels"
 	"os"
 	"strings"
 	"text/template"
@@ -13,18 +14,19 @@ import (
 	core "k8s.io/api/core/v1"
 	metatable "k8s.io/apimachinery/pkg/api/meta/table"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	meta_util "kmodules.xyz/client-go/meta"
 )
 
 // https://kubernetes.io/docs/reference/kubectl/jsonpath/
 
-var data2 = `{
+var data = `{
   "apiVersion": "apps/v1",
   "kind": "Deployment",
   "metadata": {
     "annotations": {
       "deployment.kubernetes.io/revision": "1"
     },
-    "creationTimestamp": "2021-04-21T11:46:25Z",
+    "creationTimestamp": null,
     "labels": {
       "app": "busy-dep"
     },
@@ -88,7 +90,7 @@ var data2 = `{
   }
 }`
 
-var data = `{
+var data2 = `{
   "apiVersion": "v1",
   "kind": "Service",
   "metadata": {
@@ -139,20 +141,34 @@ func jpfn(expr string, data interface{}, jsonoutput ...bool) (interface{}, error
 	return buf.String(), err
 }
 
-func selectorFn(data string) (string, error) {
+func selectorFn(data interface{}) (string, error) {
 	var sel metav1.LabelSelector
-	err := json.Unmarshal([]byte(data), &sel)
-	if err != nil {
-		return "", err
+	if s, ok := data.(string); ok && s != "" {
+		err := json.Unmarshal([]byte(s), &sel)
+		if err != nil {
+			return "", err
+		}
+	} else if _, ok := data.(map[string]interface{}); ok {
+		err := meta_util.DecodeObject(data, &sel)
+		if err != nil {
+			return "", err
+		}
 	}
 	return metav1.FormatLabelSelector(&sel), nil
 }
 
-func ageFn(data string) (string, error) {
+func ageFn(data interface{}) (string, error) {
 	var timestamp metav1.Time
-	err := timestamp.UnmarshalQueryParameter(data)
-	if err != nil {
-		return "", err
+	if s, ok := data.(string); ok && s != "" {
+		err := timestamp.UnmarshalQueryParameter(s)
+		if err != nil {
+			return "", err
+		}
+	} else if _, ok := data.(map[string]interface{}); ok {
+		err := meta_util.DecodeObject(data, &timestamp)
+		if err != nil {
+			return "", err
+		}
 	}
 	return metatable.ConvertToHumanReadableDateType(timestamp), nil
 }
@@ -164,6 +180,30 @@ func portsFn(data string) (string, error) {
 		return "", err
 	}
 	return MakePortString(ports), nil
+}
+
+func formatLabelSelectorFn(data string) (string, error) {
+	if strings.TrimSpace(data) == "" {
+		return "", nil
+	}
+	var sel metav1.LabelSelector
+	err := json.Unmarshal([]byte(data), &sel)
+	if err != nil {
+		return "", err
+	}
+	return metav1.FormatLabelSelector(&sel), nil
+}
+
+func formatLabelsFn(data string) (string, error) {
+	if strings.TrimSpace(data) == "" {
+		return "", nil
+	}
+	var label map[string]string
+	err := json.Unmarshal([]byte(data), &label)
+	if err != nil {
+		return "", err
+	}
+	return labels.FormatLabels(label), nil
 }
 
 func MakePortString(ports []core.ServicePort) string {
@@ -197,7 +237,8 @@ func main2(d interface{}) error {
 	return nil
 }
 
-func main_____() {
+// "2021-04-21T11:46:25Z"
+func main() {
 	var d interface{}
 	err := json.Unmarshal([]byte(data), &d)
 	if err != nil {
@@ -215,8 +256,10 @@ func main_____() {
 	fm["k8s_age"] = ageFn
 	fm["k8s_ports"] = portsFn
 
-	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ jp "{.metadata.labels}" . }}`))
-	tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.labels2 | toJson }}`))
+	tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.creationTimestamp | k8s_age }}`))
+	//tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.selector2 | k8s_selector }}`))
+	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ printf "%s/%s" .metadata.namespace2 .metadata.name }}`))
+	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.namespace2 }}/{{ .metadata.namespace2 }}`))
 	// Not that zero will attempt to add default values for types it knows,
 	// but will still emit <no value> for others. We mitigate that later.
 	tpl.Option("missingkey=zero")
@@ -226,7 +269,7 @@ func main_____() {
 	}
 }
 
-func main() {
+func main______() {
 	var m map[string]interface{}
 	data, err := json.Marshal(m)
 	if err != nil {
