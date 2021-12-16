@@ -57,6 +57,10 @@ var data = `{
         }
       },
       "spec": {
+		"command": [
+		  "sleep",
+		  "3600"
+		],
         "containers": [
           {
             "command": [
@@ -182,28 +186,20 @@ func portsFn(data string) (string, error) {
 	return MakePortString(ports), nil
 }
 
-func formatLabelSelectorFn(data string) (string, error) {
-	if strings.TrimSpace(data) == "" {
-		return "", nil
+func formatLabelsFn(data interface{}) (string, error) {
+	var lbl map[string]string
+	if s, ok := data.(string); ok && s != "" {
+		err := json.Unmarshal([]byte(s), &lbl)
+		if err != nil {
+			return "", err
+		}
+	} else if _, ok := data.(map[string]interface{}); ok {
+		err := meta_util.DecodeObject(data, &lbl)
+		if err != nil {
+			return "", err
+		}
 	}
-	var sel metav1.LabelSelector
-	err := json.Unmarshal([]byte(data), &sel)
-	if err != nil {
-		return "", err
-	}
-	return metav1.FormatLabelSelector(&sel), nil
-}
-
-func formatLabelsFn(data string) (string, error) {
-	if strings.TrimSpace(data) == "" {
-		return "", nil
-	}
-	var label map[string]string
-	err := json.Unmarshal([]byte(data), &label)
-	if err != nil {
-		return "", err
-	}
-	return labels.FormatLabels(label), nil
+	return labels.FormatLabels(lbl), nil
 }
 
 func MakePortString(ports []core.ServicePort) string {
@@ -237,6 +233,16 @@ func main2(d interface{}) error {
 	return nil
 }
 
+func fmtListFn(data interface{}) (string, error) {
+	if s, ok := data.(string); ok && s != "" {
+		return s, nil
+	} else if arr, ok := data.([]interface{}); ok {
+		s, err := json.Marshal(arr)
+		return string(s), err
+	}
+	return "[]", nil
+}
+
 // "2021-04-21T11:46:25Z"
 func main() {
 	var d interface{}
@@ -255,8 +261,12 @@ func main() {
 	fm["k8s_selector"] = selectorFn
 	fm["k8s_age"] = ageFn
 	fm["k8s_ports"] = portsFn
+	fm["fmt_labels"] = formatLabelsFn
+	fm["fmt_list"] = fmtListFn
 
 	tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.creationTimestamp | k8s_age }}`))
+	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.template.spec.command | fmt_list }}`))
+	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.labels | fmt_labels }}`))
 	//tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.selector2 | k8s_selector }}`))
 	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ printf "%s/%s" .metadata.namespace2 .metadata.name }}`))
 	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.namespace2 }}/{{ .metadata.namespace2 }}`))
@@ -283,4 +293,26 @@ func main______() {
 		panic(err)
 	}
 	fmt.Printf("%+v", x)
+}
+
+func main____() {
+	type Person struct {
+		Name string `json:"name,omitempty"`
+	}
+
+	data := []interface{}{
+		map[string]interface{}{
+			"name": "x",
+		},
+		map[string]interface{}{
+			"name": "y",
+		},
+	}
+
+	var persons []Person
+	err := meta_util.DecodeObject(data, &persons)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%+v", persons)
 }
