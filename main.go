@@ -264,7 +264,7 @@ func main() {
 	fm["fmt_labels"] = formatLabelsFn
 	fm["fmt_list"] = fmtListFn
 
-	tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.creationTimestamp | k8s_age }}`))
+	tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.abc.xyz | k8s_age }}`))
 	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.template.spec.command | fmt_list }}`))
 	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.labels | fmt_labels }}`))
 	//tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.selector2 | k8s_selector }}`))
@@ -272,7 +272,7 @@ func main() {
 	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.namespace2 }}/{{ .metadata.namespace2 }}`))
 	// Not that zero will attempt to add default values for types it knows,
 	// but will still emit <no value> for others. We mitigate that later.
-	tpl.Option("missingkey=zero")
+	tpl.Option("missingkey=default")
 	err = tpl.Execute(os.Stdout, d)
 	if err != nil {
 		panic(err)
