@@ -20,6 +20,81 @@ import (
 // https://kubernetes.io/docs/reference/kubectl/jsonpath/
 
 var data = `{
+    "apiVersion": "v1",
+    "kind": "Service",
+    "metadata": {
+        "creationTimestamp": "2021-12-20T02:36:40Z",
+        "labels": {
+            "component": "apiserver",
+            "provider": "kubernetes"
+        },
+        "managedFields": [
+            {
+                "apiVersion": "v1",
+                "fieldsType": "FieldsV1",
+                "fieldsV1": {
+                    "f:metadata": {
+                        "f:labels": {
+                            ".": {},
+                            "f:component": {},
+                            "f:provider": {}
+                        }
+                    },
+                    "f:spec": {
+                        "f:clusterIP": {},
+                        "f:internalTrafficPolicy": {},
+                        "f:ipFamilyPolicy": {},
+                        "f:ports": {
+                            ".": {},
+                            "k:{\"port\":443,\"protocol\":\"TCP\"}": {
+                                ".": {},
+                                "f:name": {},
+                                "f:port": {},
+                                "f:protocol": {},
+                                "f:targetPort": {}
+                            }
+                        },
+                        "f:sessionAffinity": {},
+                        "f:type": {}
+                    }
+                },
+                "manager": "kube-apiserver",
+                "operation": "Update",
+                "time": "2021-12-20T02:36:40Z"
+            }
+        ],
+        "name": "kubernetes",
+        "namespace": "default",
+        "resourceVersion": "209",
+        "uid": "2329aab6-e918-4c74-9b23-884d2f016281"
+    },
+    "spec": {
+        "clusterIP": "10.96.0.1",
+        "clusterIPs": [
+            "10.96.0.1"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+            "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+            {
+                "name": "https",
+                "port": 443,
+                "protocol": "TCP",
+                "targetPort": 6443
+            }
+        ],
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+    },
+    "status": {
+        "loadBalancer": {}
+    }
+}`
+
+var data3 = `{
   "apiVersion": "apps/v1",
   "kind": "Deployment",
   "metadata": {
@@ -57,10 +132,10 @@ var data = `{
         }
       },
       "spec": {
-		"command": [
-		  "sleep",
-		  "3600"
-		],
+			"command": [
+			  "sleep",
+			  "3600"
+			],
         "containers": [
           {
             "command": [
@@ -186,6 +261,39 @@ func portsFn(data string) (string, error) {
 	return MakePortString(ports), nil
 }
 
+func servicePortsFn(data interface{}) (string, error) {
+	var ports []core.ServicePort
+
+	if s, ok := data.(string); ok && s != "" {
+		err := json.Unmarshal([]byte(s), &ports)
+		if err != nil {
+			return "", err
+		}
+	} else if _, ok := data.([]interface{}); ok {
+		data, err := json.Marshal(data)
+		if err != nil {
+			return "", err
+		}
+		err = json.Unmarshal(data, &ports)
+		if err != nil {
+			return "", err
+		}
+	}
+	return MakeServicePortString(ports), nil
+}
+
+func MakeServicePortString(ports []core.ServicePort) string {
+	pieces := make([]string, len(ports))
+	for ix := range ports {
+		port := &ports[ix]
+		pieces[ix] = fmt.Sprintf("%d/%s", port.Port, port.Protocol)
+		if port.NodePort > 0 {
+			pieces[ix] = fmt.Sprintf("%d:%d/%s", port.Port, port.NodePort, port.Protocol)
+		}
+	}
+	return strings.Join(pieces, ",")
+}
+
 func formatLabelsFn(data interface{}) (string, error) {
 	var lbl map[string]string
 	if s, ok := data.(string); ok && s != "" {
@@ -263,8 +371,10 @@ func main() {
 	fm["k8s_ports"] = portsFn
 	fm["fmt_labels"] = formatLabelsFn
 	fm["fmt_list"] = fmtListFn
+	fm["k8s_svc_ports"] = servicePortsFn
 
-	tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.abc.xyz | k8s_age }}`))
+	tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.ports | k8s_svc_ports }}`))
+	//tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.abc.xyz | k8s_age }}`))
 	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.template.spec.command | fmt_list }}`))
 	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.labels | fmt_labels }}`))
 	//tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.selector2 | k8s_selector }}`))
