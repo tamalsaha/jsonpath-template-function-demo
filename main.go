@@ -19,6 +19,46 @@ import (
 
 // https://kubernetes.io/docs/reference/kubectl/jsonpath/
 
+// kuubectl get cm kube-root-ca.crt -o json
+var d3 = `{
+    "apiVersion": "v1",
+    "data": {
+        "ca.crt": "-----BEGIN CERTIFICATE-----\nMIIC/jCCAeagAwIBAgIBADANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDEwprdWJl\ncm5ldGVzMB4XDTIyMDIxNDA1MzQxM1oXDTMyMDIxMjA1MzQxM1owFTETMBEGA1UE\nAxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL9n\nwMyAS74A+5Fx2yXcBzdIOxUkF+jD5jRoQp0qZYS65ROYYAzTVmF1IhJeSz8gUsSa\nMisKbnGfHFiTmX2K4UDzop/45CKBGYinW3JrxF2uIhu4+K21bU0l6/dRA4ACFQIF\nRA1uI6t3nYwfPEdzY4QiSwswQWso/Ev/jXu1dteaMNc2YDZSSK2QTs3jNjMFhuVc\nx0MR85ybRZykVOh2Yj4e4050DmuR776mVqulMuJRj8aGv6RpTAxVmTXSOGT7nAty\nDUvCXVyF/uCeFYXtf2UrDo2ZaQIQaLlcO0XHkwYLSgjHdEPCLTiXH4k1Ux/cfOya\n92FHvCKx+UT+o1OZD+cCAwEAAaNZMFcwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB\n/wQFMAMBAf8wHQYDVR0OBBYEFNCqwatFOSjh3PyRHAEujeceSVvWMBUGA1UdEQQO\nMAyCCmt1YmVybmV0ZXMwDQYJKoZIhvcNAQELBQADggEBAFT4zYlgvTZ12wRXHEL1\nNN3zjSDpxUuMJs/nLAegQKkOi69LIuh8yifCJTZhXAz9ZCfnFNkuOPiYm90iNLqa\n/n2XZ7mW6p+z5MWN/Ff9o3WJzBTEnkm8N3JMHkScb57I702QD7KBTCUEaTP1NAQq\n7N7NF9drEpBRlfuVhanfrgz/0CD0sc2cdNjE8xU7j/Yh54i5rg4NebqTHUB8stf2\nK7I177dU9RfZ0tCx+6ditQ6SY6woCwMFXKDLq8MFuk2AJZYTBVELd1lMLokJlXQW\nFxSuvpUVjKcdUlMx4wgd1qsuRbyihKZxqMiAp2F7X44VXreQrYkaVceT1x4zugjz\nscY=\n-----END CERTIFICATE-----\n"
+    },
+    "kind": "ConfigMap",
+    "metadata": {
+        "annotations": {
+            "kubernetes.io/description": "Contains a CA bundle that can be used to verify the kube-apiserver when using internal endpoints such as the internal service IP or kubernetes.default.svc. No other usage is guaranteed across distributions of Kubernetes clusters."
+        },
+        "creationTimestamp": "2022-02-14T05:34:47Z",
+        "managedFields": [
+            {
+                "apiVersion": "v1",
+                "fieldsType": "FieldsV1",
+                "fieldsV1": {
+                    "f:data": {
+                        ".": {},
+                        "f:ca.crt": {}
+                    },
+                    "f:metadata": {
+                        "f:annotations": {
+                            ".": {},
+                            "f:kubernetes.io/description": {}
+                        }
+                    }
+                },
+                "manager": "kube-controller-manager",
+                "operation": "Update",
+                "time": "2022-02-14T05:34:47Z"
+            }
+        ],
+        "name": "kube-root-ca.crt",
+        "namespace": "default",
+        "resourceVersion": "440",
+        "uid": "671c3f08-774d-454d-b2e2-fa03b049bd97"
+    }
+}`
+
 var data = `{
     "apiVersion": "v1",
     "kind": "Service",
@@ -354,7 +394,7 @@ func fmtListFn(data interface{}) (string, error) {
 // "2021-04-21T11:46:25Z"
 func main() {
 	var d interface{}
-	err := json.Unmarshal([]byte(data), &d)
+	err := json.Unmarshal([]byte(d3), &d)
 	if err != nil {
 		panic(err)
 	}
@@ -373,7 +413,7 @@ func main() {
 	fm["fmt_list"] = fmtListFn
 	fm["k8s_svc_ports"] = servicePortsFn
 
-	tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.ports | k8s_svc_ports }}`))
+	//tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.ports | k8s_svc_ports }}`))
 	//tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.abc.xyz | k8s_age }}`))
 	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.template.spec.command | fmt_list }}`))
 	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.labels | fmt_labels }}`))
@@ -382,6 +422,8 @@ func main() {
 	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.namespace2 }}/{{ .metadata.namespace2 }}`))
 	// Not that zero will attempt to add default values for types it knows,
 	// but will still emit <no value> for others. We mitigate that later.
+
+	tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ dig "data" "ca.crt" "unknown" . }}`))
 	tpl.Option("missingkey=default")
 	err = tpl.Execute(os.Stdout, d)
 	if err != nil {
