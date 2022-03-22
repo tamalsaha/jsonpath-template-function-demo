@@ -471,10 +471,14 @@ func main____() {
 }
 
 var doc5 = `{
-	"dashboards": [
-		{"title": "a"},
-		{"title": "b"}
-	]
+  "dashboards": [
+    {
+      "title": "a"
+    },
+    {
+      "title": "b"
+    }
+  ]
 }`
 
 func main() {
@@ -484,18 +488,18 @@ func main() {
 		panic(err)
 	}
 
-	enableJSONoutput := true
-	expr := ".dashboards"
+	enableJSONoutput := false
+	expr := "{.dashboards[0]}"
 
-	jp := jsonpath.New("jp")
+	jp := jsonpath.New("")
 	if err := jp.Parse(expr); err != nil {
 		panic(err)
 	}
-	jp.AllowMissingKeys(true)
+	jp.AllowMissingKeys(false)
 	jp.EnableJSONOutput(enableJSONoutput)
 
 	var buf bytes.Buffer
-	err = jp.Execute(&buf, data)
+	err = jp.Execute(&buf, d)
 	if err != nil {
 		panic(err)
 	}
