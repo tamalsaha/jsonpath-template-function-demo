@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"k8s.io/apimachinery/pkg/labels"
 	"os"
 	"strings"
 	"text/template"
+
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/Masterminds/sprig/v3"
 	"gomodules.xyz/jsonpath"
@@ -392,7 +393,7 @@ func fmtListFn(data interface{}) (string, error) {
 }
 
 // "2021-04-21T11:46:25Z"
-func main() {
+func main_tpl() {
 	var d interface{}
 	err := json.Unmarshal([]byte(d3), &d)
 	if err != nil {
@@ -413,11 +414,11 @@ func main() {
 	fm["fmt_list"] = fmtListFn
 	fm["k8s_svc_ports"] = servicePortsFn
 
-	//tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.ports | k8s_svc_ports }}`))
-	//tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.abc.xyz | k8s_age }}`))
+	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.ports | k8s_svc_ports }}`))
+	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.abc.xyz | k8s_age }}`))
 	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.template.spec.command | fmt_list }}`))
 	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.labels | fmt_labels }}`))
-	//tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.selector2 | k8s_selector }}`))
+	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .spec.selector2 | k8s_selector }}`))
 	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ printf "%s/%s" .metadata.namespace2 .metadata.name }}`))
 	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ .metadata.namespace2 }}/{{ .metadata.namespace2 }}`))
 	// Not that zero will attempt to add default values for types it knows,
@@ -467,4 +468,43 @@ func main____() {
 		panic(err)
 	}
 	fmt.Printf("%+v", persons)
+}
+
+var doc5 = `{
+	"dashboards": [
+		{"title": "a"},
+		{"title": "b"}
+	]
+}`
+
+func main() {
+	var d interface{}
+	err := json.Unmarshal([]byte(doc5), &d)
+	if err != nil {
+		panic(err)
+	}
+
+	enableJSONoutput := true
+	expr := ".dashboards"
+
+	jp := jsonpath.New("jp")
+	if err := jp.Parse(expr); err != nil {
+		panic(err)
+	}
+	jp.AllowMissingKeys(true)
+	jp.EnableJSONOutput(enableJSONoutput)
+
+	var buf bytes.Buffer
+	err = jp.Execute(&buf, data)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(buf.String())
+
+	//if enableJSONoutput {
+	//	var v []interface{}
+	//	err = json.Unmarshal(buf.Bytes(), &v)
+	//	return v, err
+	//}
+	//return buf.String(), err
 }
