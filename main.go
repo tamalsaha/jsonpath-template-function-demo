@@ -525,6 +525,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	{
+		data, _ := json.Marshal(fullResults[0][0].Interface())
+		fmt.Println(string(data))
+	}
+
 	for ix := range fullResults {
 		if err := jp.PrintResults(&buf, fullResults[ix]); err != nil {
 			panic(err)
