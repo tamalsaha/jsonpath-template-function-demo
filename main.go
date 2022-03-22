@@ -484,15 +484,33 @@ var doc5 = `{
   ]
 }`
 
+var doc6 = `{
+	"dashboards": [
+      {
+      	"panels": [
+      		{"title": "a"},
+      		{"title": "b"}
+      	 ]
+      },
+      {
+      	"panels": [
+      		{"title": "c"},
+      		{"title": "d"}
+      	 ]
+      }
+	]
+}`
+
 func main() {
 	var d interface{}
-	err := json.Unmarshal([]byte(doc5), &d)
+	err := json.Unmarshal([]byte(doc6), &d)
 	if err != nil {
 		panic(err)
 	}
 
 	enableJSONoutput := false
-	expr := "{.dashboards[0]},{.dashboards[1]}"
+	// expr := "{.dashboards[0]},{.dashboards[1]}"
+	expr := "{.dashboards[1].panels}"
 
 	jp := jsonpath.New("")
 	if err := jp.Parse(expr); err != nil {
