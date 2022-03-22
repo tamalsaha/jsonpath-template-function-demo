@@ -3,7 +3,10 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"os"
 	"strings"
 	"text/template"
@@ -489,21 +492,35 @@ func main() {
 	}
 
 	enableJSONoutput := false
-	expr := "{.dashboards[0]}"
+	expr := "{.dashboards[0]},{.dashboards[1]}"
 
 	jp := jsonpath.New("")
 	if err := jp.Parse(expr); err != nil {
 		panic(err)
 	}
-	jp.AllowMissingKeys(false)
+	jp.AllowMissingKeys(true)
 	jp.EnableJSONOutput(enableJSONoutput)
 
 	var buf bytes.Buffer
-	err = jp.Execute(&buf, d)
+
+	fullResults, err := jp.FindResults(d)
 	if err != nil {
 		panic(err)
 	}
+	for ix := range fullResults {
+		if err := jp.PrintResults(&buf, fullResults[ix]); err != nil {
+			panic(err)
+		}
+	}
 	fmt.Println(buf.String())
+	// return nil
+
+	//var buf2 bytes.Buffer
+	//err = jp.Execute(&buf2, d)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//fmt.Println(buf2.String())
 
 	//if enableJSONoutput {
 	//	var v []interface{}
@@ -511,4 +528,54 @@ func main() {
 	//	return v, err
 	//}
 	//return buf.String(), err
+}
+
+func Extract(d map[string]interface{}, expr string) (interface{}, bool, error) {
+	if strings.HasPrefix(expr, "{") {
+		return ExtractJSONPath(d, expr)
+	}
+	return unstructured.NestedFieldNoCopy(d, fields(expr)...)
+}
+
+func ExtractSlice(d map[string]interface{}, expr string) ([]interface{}, bool, error) {
+	val, found, err := Extract(d, expr)
+	if !found || err != nil {
+		return nil, found, err
+	}
+	_, ok := val.([]interface{})
+	if !ok {
+		return nil, false, fmt.Errorf("%v accessor error: %v is of the type %T, expected []interface{}", expr, val, val)
+	}
+	return runtime.DeepCopyJSONValue(val).([]interface{}), true, nil
+}
+
+func fields(path string) []string {
+	return strings.Split(strings.Trim(path, "."), ".")
+}
+
+func ExtractJSONPath(d interface{}, expr string) (interface{}, bool, error) {
+	enableJSONOutput := false
+
+	jp := jsonpath.New("")
+	if err := jp.Parse(expr); err != nil {
+		return nil, false, err
+	}
+	jp.AllowMissingKeys(true)
+	jp.EnableJSONOutput(enableJSONOutput)
+
+	fullResults, err := jp.FindResults(d)
+	if err != nil {
+		return nil, false, err
+	}
+	switch len(fullResults) {
+	case 0:
+		return nil, false, nil
+	case 1:
+		if len(fullResults[0]) > 1 {
+			return nil, false, errors.New("expr returned multiple results")
+		}
+		return fullResults[0][0].Interface(), true, nil
+	default:
+		return nil, false, errors.New("expr returned multiple results")
+	}
 }
