@@ -395,10 +395,203 @@ func fmtListFn(data interface{}) (string, error) {
 	return "[]", nil
 }
 
+var y1 = `{
+  "host": "10.2.9.49",
+  "indices": {
+    "completion": {
+      "fields": null,
+      "size": "0b",
+      "size_in_bytes": 0
+    },
+    "docs": {
+      "count": 0,
+      "deleted": 0
+    },
+    "fielddata": {
+      "evictions": 0,
+      "fields": null,
+      "memory_size": "0b",
+      "memory_size_in_bytes": 0
+    },
+    "flush": {
+      "total": 1,
+      "total_time": "0s",
+      "total_time_in_millis": 0
+    },
+    "get": {
+      "current": 0,
+      "exists": 0,
+      "exists_in_millis": 0,
+      "exists_time": "0s",
+      "get_time": "",
+      "missing": 0,
+      "missing_in_millis": 0,
+      "missing_time": "0s",
+      "time_in_millis": 0,
+      "total": 0
+    },
+    "indexing": {
+      "delete_current": 0,
+      "delete_time": "0s",
+      "delete_time_in_millis": 0,
+      "delete_total": 0,
+      "index_current": 0,
+      "index_failed": 0,
+      "index_time": "0s",
+      "index_time_in_millis": 0,
+      "index_total": 0,
+      "is_throttled": false,
+      "noop_update_total": 0,
+      "throttle_time": "0s",
+      "throttle_time_in_millis": 0,
+      "types": null
+    },
+    "indices": null,
+    "merges": {
+      "current": 0,
+      "current_docs": 0,
+      "current_size": "0b",
+      "current_size_in_bytes": 0,
+      "total": 0,
+      "total_auto_throttle": "20mb",
+      "total_auto_throttle_in_bytes": 20971520,
+      "total_docs": 0,
+      "total_size": "0b",
+      "total_size_in_bytes": 0,
+      "total_stopped_time": "0s",
+      "total_stopped_time_in_millis": 0,
+      "total_throttled_time": "0s",
+      "total_throttled_time_in_millis": 0,
+      "total_time": "0s",
+      "total_time_in_millis": 0
+    },
+    "query_cache": {
+      "cache_count": 0,
+      "cache_size": 0,
+      "evictions": 0,
+      "hit_count": 0,
+      "memory_size": "0b",
+      "memory_size_in_bytes": 0,
+      "miss_count": 0,
+      "total_count": 0
+    },
+    "recovery": {
+      "current_as_source": 0,
+      "current_as_target": 0
+    },
+    "refresh": {
+      "total": 6,
+      "total_time": "0s",
+      "total_time_in_millis": 0
+    },
+    "request_cache": {
+      "evictions": 0,
+      "hit_count": 0,
+      "memory_size": "0b",
+      "memory_size_in_bytes": 0,
+      "miss_count": 0
+    },
+    "search": {
+      "fetch_current": 0,
+      "fetch_time": "0s",
+      "fetch_time_in_millis": 0,
+      "fetch_total": 0,
+      "groups": null,
+      "open_contexts": 0,
+      "query_current": 0,
+      "query_time": "0s",
+      "query_time_in_millis": 0,
+      "query_total": 0,
+      "scroll_current": 0,
+      "scroll_time": "0s",
+      "scroll_time_in_millis": 0,
+      "scroll_total": 0
+    },
+    "segments": {
+      "count": 0,
+      "doc_values_memory": "0b",
+      "doc_values_memory_in_bytes": 0,
+      "fixed_bit_set": "0b",
+      "fixed_bit_set_memory_in_bytes": 0,
+      "index_writer_max_memory": "",
+      "index_writer_max_memory_in_bytes": 0,
+      "index_writer_memory": "0b",
+      "index_writer_memory_in_bytes": 0,
+      "memory": "0b",
+      "memory_in_bytes": 0,
+      "norms_memory": "0b",
+      "norms_memory_in_bytes": 0,
+      "stored_fields_memory": "0b",
+      "stored_fields_memory_in_bytes": 0,
+      "term_vectors_memory": "0b",
+      "term_vectors_memory_in_bytes": 0,
+      "terms_memory": "0b",
+      "terms_memory_in_bytes": 0,
+      "version_map_memory": "0b",
+      "version_map_memory_in_bytes": 0
+    },
+    "shards": null,
+    "shards_stats": null,
+    "store": {
+      "size": "208b",
+      "size_in_bytes": 208
+    },
+    "translog": {
+      "operations": 0,
+      "size": "55b",
+      "size_in_bytes": 55
+    },
+    "warmer": {
+      "current": 0,
+      "total": 1,
+      "total_time": "1ms",
+      "total_time_in_millis": 1
+    }
+  },
+  "ip": "10.2.9.49:9300",
+  "name": "demo-elastic-1",
+  "os": {
+    "cpu": {
+      "load_average": {
+        "15m": 0.36,
+        "1m": 0.24,
+        "5m": 0.4
+      },
+      "percent": 1
+    },
+    "mem": {
+      "free": "231.6mb",
+      "free_in_bytes": 242909184,
+      "free_percent": 23,
+      "total": "1gb",
+      "total_in_bytes": 1073741824,
+      "used": "792.3mb",
+      "used_in_bytes": 830832640,
+      "used_percent": 77
+    },
+    "swap": {
+      "free": "0b",
+      "free_in_bytes": 0,
+      "total": "0b",
+      "total_in_bytes": 0,
+      "used": "0b",
+      "used_in_bytes": 0
+    },
+    "timestamp": 1649131245519
+  },
+  "roles": [
+    "data",
+    "ingest",
+    "master"
+  ],
+  "timestamp": "54228-11-21T04:38:37Z",
+  "transportAddr": "10.2.9.49:9300"
+}`
+
 // "2021-04-21T11:46:25Z"
-func main_tpl() {
+func main() {
 	var d interface{}
-	err := json.Unmarshal([]byte(d3), &d)
+	err := json.Unmarshal([]byte(y1), &d)
 	if err != nil {
 		panic(err)
 	}
@@ -427,7 +620,8 @@ func main_tpl() {
 	// Not that zero will attempt to add default values for types it knows,
 	// but will still emit <no value> for others. We mitigate that later.
 
-	tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ dig "data" "ca.crt" "unknown" . }}`))
+	// tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ default "0" .indices.shards_stats.total_count }}`))
+	tpl := template.Must(template.New("").Funcs(fm).Parse(`{{ dig "shards_stats" "total_count"  "0" .indices }}`))
 	tpl.Option("missingkey=default")
 	err = tpl.Execute(os.Stdout, d)
 	if err != nil {
@@ -501,7 +695,7 @@ var doc6 = `{
 	]
 }`
 
-func main() {
+func main_jp() {
 	var d interface{}
 	err := json.Unmarshal([]byte(doc6), &d)
 	if err != nil {
