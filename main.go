@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"os"
 	"strings"
 	"text/template"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -589,7 +590,7 @@ var y1 = `{
 }`
 
 // "2021-04-21T11:46:25Z"
-func main() {
+func main___() {
 	var d interface{}
 	err := json.Unmarshal([]byte(y1), &d)
 	if err != nil {
@@ -796,4 +797,57 @@ func ExtractJSONPath(d interface{}, expr string) (interface{}, bool, error) {
 	default:
 		return nil, false, errors.New("expr returned multiple results")
 	}
+}
+
+var docStash = `{
+  "invoker": {
+    "apiGroup": "stash.appscode.com",
+    "kind": "BackupConfiguration",
+    "name": "demo-app-sample-mysql"
+  },
+  "name": "demo-app-sample-mysql-w474g",
+  "namespace": "stash",
+  "status": {
+    "duration": "4s",
+    "error": "mysqldump: [ERROR] mysqldump: unknown option '-k'. {\"message_type\":\"error\",\"error\":{\"Op\":\"read\",\"Path\":\"/dumpfile.sql\",\"Err\":{}},\"during\":\"archival\",\"item\":\"/dumpfile.sql\"} Fatal: unable to save snapshot: snapshot is empty",
+    "phase": "Failed"
+  },
+  "target": {
+    "apiVersion": "appcatalog.appscode.com/v1alpha1",
+    "kind": "AppBinding",
+    "name": "sample-mysql",
+    "namespace": "demo"
+  }
+}`
+
+func main() {
+	var d interface{}
+	err := json.Unmarshal([]byte(docStash), &d)
+	if err != nil {
+		panic(err)
+	}
+
+	tplStr := `{{- $m := dict  "type" "mrkdwn" "text" (printf ":x: Backup failed for %s/%s Reason: %s." .namespace .target.name .status.error) -}}
+{
+  "blocks": [
+      {
+        "type": "section",
+        "text": {{ toJson $m }}
+      }
+    ]
+}`
+
+	fm := sprig.TxtFuncMap()
+	tpl := template.Must(template.New("").Funcs(fm).Parse(tplStr))
+	// tpl.Option("missingkey=default")
+
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, d)
+	if err != nil {
+		panic(err)
+	}
+
+	out := map[string]interface{}{}
+	json.Unmarshal(buf.Bytes(), &out)
+	fmt.Println(out)
 }
